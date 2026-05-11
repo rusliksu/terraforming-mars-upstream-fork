@@ -7,7 +7,7 @@ import {Thermalist} from '../src/server/awards/Thermalist';
 import {Birds} from '../src/server/cards/base/Birds';
 import {WaterImportFromEuropa} from '../src/server/cards/base/WaterImportFromEuropa';
 import {Phase} from '../src/common/Phase';
-import {addCity, addGreenery, addOcean, forceGenerationEnd, maxOutOceans, runAllActions, setOxygenLevel, setTemperature, setVenusScaleLevel} from './TestingUtils';
+import {addCity, addGreenery, addOcean, forceGenerationEnd, formatMessage, maxOutOceans, runAllActions, setOxygenLevel, setTemperature, setVenusScaleLevel} from './TestingUtils';
 import {cast, toName} from '../src/common/utils/utils';
 import {TestPlayer} from './TestPlayer';
 import {SaturnSystems} from '../src/server/cards/corporation/SaturnSystems';
@@ -18,6 +18,7 @@ import {ArcticAlgae} from '../src/server/cards/base/ArcticAlgae';
 import {Ecologist} from '../src/server/milestones/Ecologist';
 import {OrOptions} from '../src/server/inputs/OrOptions';
 import {BoardName} from '../src/common/boards/BoardName';
+import {SpaceType} from '../src/common/boards/SpaceType';
 import {CardName} from '../src/common/cards/CardName';
 import {Player} from '../src/server/Player';
 import {RandomMAOptionType} from '../src/common/ma/RandomMAOptionType';
@@ -731,6 +732,82 @@ describe('Game', () => {
     expect(player.cardsInHand).has.length(4);
     expect(player.plants).eq(1);
     expect(player.titanium).eq(1);
+  });
+
+  describe('ocean adjacency bonus logging', () => {
+    it('logs megacredits gained from ocean adjacency bonuses', () => {
+      const player = TestPlayer.BLUE.newPlayer();
+      const game = Game.newInstance('gameid', [player], player);
+      const oceanSpace = addOcean(player);
+      const availableLandSpaces = game.board.getAvailableSpacesOnLand(player);
+      const space = game.board.getAdjacentSpaces(oceanSpace)
+        .find((space) => availableLandSpaces.includes(space))!;
+      space.bonus = [];
+      game.gameLog = [];
+
+      game.addTile(player, space, {tileType: TileType.GREENERY});
+
+      expect(player.megaCredits).eq(2);
+      expect(game.gameLog.map(formatMessage)).includes('blue gained 2 M€');
+    });
+
+    it('logs ocean adjacency bonuses when placing an ocean next to an ocean', () => {
+      const player = TestPlayer.BLUE.newPlayer();
+      const game = Game.newInstance('gameid', [player], player);
+      const oceanSpaces = game.board.getAvailableSpacesForOcean(player);
+      const oceanSpace = oceanSpaces.find((space) => game.board.getAdjacentSpaces(space)
+        .some((adjacentSpace) => oceanSpaces.includes(adjacentSpace)))!;
+      const adjacentOceanSpace = game.board.getAdjacentSpaces(oceanSpace)
+        .find((space) => oceanSpaces.includes(space))!;
+      game.addOcean(player, oceanSpace);
+      player.megaCredits = 0;
+      game.gameLog = [];
+
+      game.addOcean(player, adjacentOceanSpace);
+
+      expect(player.megaCredits).eq(2);
+      expect(game.gameLog.map(formatMessage)).includes('blue gained 2 M€');
+    });
+
+    it('logs ocean adjacency bonuses for the player placing the tile', () => {
+      const player = TestPlayer.BLUE.newPlayer();
+      const opponent = TestPlayer.RED.newPlayer();
+      const game = Game.newInstance('gameid', [player, opponent], player);
+      const oceanSpace = addOcean(player);
+      const availableLandSpaces = game.board.getAvailableSpacesOnLand(opponent);
+      const space = game.board.getAdjacentSpaces(oceanSpace)
+        .find((space) => availableLandSpaces.includes(space))!;
+      space.bonus = [];
+      player.megaCredits = 0;
+      opponent.megaCredits = 0;
+      game.gameLog = [];
+
+      game.addTile(opponent, space, {tileType: TileType.GREENERY});
+
+      expect(player.megaCredits).eq(0);
+      expect(opponent.megaCredits).eq(2);
+      expect(game.gameLog.map(formatMessage)).includes('red gained 2 M€');
+    });
+
+    it('logs combined megacredits gained from multiple adjacent oceans', () => {
+      const player = TestPlayer.BLUE.newPlayer();
+      const game = Game.newInstance('gameid', [player], player);
+      const space = game.board.getAvailableSpacesOnLand(player)
+        .find((space) => game.board.getAdjacentSpaces(space)
+          .filter((adjacentSpace) => adjacentSpace.spaceType === SpaceType.OCEAN).length >= 2)!;
+      const oceanSpaces = game.board.getAdjacentSpaces(space)
+        .filter((adjacentSpace) => adjacentSpace.spaceType === SpaceType.OCEAN)
+        .slice(0, 2);
+      oceanSpaces.forEach((oceanSpace) => game.addOcean(player, oceanSpace));
+      space.bonus = [];
+      player.megaCredits = 0;
+      game.gameLog = [];
+
+      game.addTile(player, space, {tileType: TileType.GREENERY});
+
+      expect(player.megaCredits).eq(4);
+      expect(game.gameLog.map(formatMessage)).includes('blue gained 4 M€');
+    });
   });
 
   it('Ocean upgrade tiles can be placed on ocean spaces without Ares or Pathfinders', () => {

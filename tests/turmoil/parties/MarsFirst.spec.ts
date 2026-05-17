@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {IGame} from '../../../src/server/IGame';
-import {setRulingParty, addGreenery} from '../../TestingUtils';
+import {formatMessage, setRulingParty, addGreenery} from '../../TestingUtils';
 import {TestPlayer} from '../../TestPlayer';
 import {MARS_FIRST_BONUS_1, MARS_FIRST_BONUS_2, MARS_FIRST_POLICY_4} from '../../../src/server/turmoil/parties/MarsFirst';
 import {Mine} from '../../../src/server/cards/base/Mine';
@@ -37,6 +37,15 @@ describe('MarsFirst', () => {
 
     addGreenery(player, '11');
     expect(player.steel).to.eq(1);
+  });
+
+  it('Ruling policy 1: Logs steel gained from Mars First policy', () => {
+    setRulingParty(game, PartyName.MARS, 'mp01');
+    game.gameLog.length = 0;
+
+    addGreenery(player, '11');
+
+    expect(formatMessage(game.gameLog[game.gameLog.length - 1])).eq('blue gained 1 steel from Turmoil Mars First policy');
   });
 
   it('Ruling policy 2: When you play a building tag, gain 2 MC', () => {

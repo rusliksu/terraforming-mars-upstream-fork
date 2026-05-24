@@ -438,6 +438,7 @@ export class Server {
       includedCards: options.includedCards,
       includeFanMA: options.includeFanMA,
       initialDraftVariant: options.initialDraftVariant,
+      initialDraftOneWay: options.initialDraftOneWay === true,
       preludeDraftVariant: options.preludeDraftVariant,
       ceosDraftVariant: options.ceosDraftVariant,
       politicalAgendasExtension: options.politicalAgendasExtension,

@@ -9,6 +9,67 @@ import {RandomBoardOption} from '../../src/common/boards/RandomBoardOption';
 import {RandomMAOptionType} from '../../src/common/ma/RandomMAOptionType';
 import {SimpleGameModel} from '../../src/common/models/SimpleGameModel';
 
+function newGameConfig(players: NewGameConfig['players']): NewGameConfig {
+  return {
+    players,
+    expansions: {
+      corpera: true,
+      promo: false,
+      venus: false,
+      colonies: false,
+      prelude: false,
+      prelude2: false,
+      turmoil: false,
+      community: false,
+      ares: false,
+      moon: false,
+      pathfinders: false,
+      ceo: false,
+      starwars: false,
+      underworld: false,
+      deltaProject: false,
+    },
+    board: RandomBoardOption.OFFICIAL,
+    seed: 0,
+    randomFirstPlayer: false,
+    clonedGamedId: undefined,
+    undoOption: false,
+    showTimers: false,
+    fastModeOption: false,
+    showOtherPlayersVP: false,
+    aresExtremeVariant: false,
+    politicalAgendasExtension: 'Standard',
+    solarPhaseOption: false,
+    removeNegativeGlobalEventsOption: false,
+    modularMA: false,
+    draftVariant: false,
+    initialDraft: false,
+    initialDraftOneWay: false,
+    preludeDraftVariant: false,
+    ceosDraftVariant: false,
+    startingCorporations: 0,
+    shuffleMapOption: false,
+    randomMA: RandomMAOptionType.NONE,
+    includeFanMA: false,
+    soloTR: false,
+    customCorporationsList: [],
+    bannedCards: [],
+    includedCards: [],
+    customColoniesList: [],
+    customPreludes: [],
+    requiresMoonTrackCompletion: false,
+    requiresVenusTrackCompletion: false,
+    moonStandardProjectVariant: false,
+    moonStandardProjectVariant1: false,
+    altVenusBoard: false,
+    escapeVelocity: undefined,
+    twoCorpsVariant: false,
+    customCeos: [],
+    startingCeos: 0,
+    startingPreludes: 0,
+  };
+}
+
 describe('ApiCreateGame', () => {
   let scaffolding: RouteTestScaffolding;
   let req: MockRequest;
@@ -50,70 +111,14 @@ describe('ApiCreateGame', () => {
   it('simple create', async () => {
     const post = scaffolding.post(apiCreateGame, res);
     const emit = Promise.resolve().then(() => {
-      const newGameConfig: NewGameConfig = {
-        players: [{
-          name: 'Robot',
-          color: 'blue',
-          beginner: false,
-          handicap: 0,
-          first: true,
-        }],
-        expansions: {
-          corpera: true,
-          promo: false,
-          venus: false,
-          colonies: false,
-          prelude: false,
-          prelude2: false,
-          turmoil: false,
-          community: false,
-          ares: false,
-          moon: false,
-          pathfinders: false,
-          ceo: false,
-          starwars: false,
-          underworld: false,
-          deltaProject: false,
-        },
-        board: RandomBoardOption.OFFICIAL,
-        seed: 0,
-        randomFirstPlayer: false,
-        clonedGamedId: undefined,
-        undoOption: false,
-        showTimers: false,
-        fastModeOption: false,
-        showOtherPlayersVP: false,
-        aresExtremeVariant: false,
-        politicalAgendasExtension: 'Standard',
-        solarPhaseOption: false,
-        removeNegativeGlobalEventsOption: false,
-        modularMA: false,
-        draftVariant: false,
-        initialDraft: false,
-        preludeDraftVariant: false,
-        ceosDraftVariant: false,
-        startingCorporations: 0,
-        shuffleMapOption: false,
-        randomMA: RandomMAOptionType.NONE,
-        includeFanMA: false,
-        soloTR: false,
-        customCorporationsList: [],
-        bannedCards: [],
-        includedCards: [],
-        customColoniesList: [],
-        customPreludes: [],
-        requiresMoonTrackCompletion: false,
-        requiresVenusTrackCompletion: false,
-        moonStandardProjectVariant: false,
-        moonStandardProjectVariant1: false,
-        altVenusBoard: false,
-        escapeVelocity: undefined,
-        twoCorpsVariant: false,
-        customCeos: [],
-        startingCeos: 0,
-        startingPreludes: 0,
-      };
-      req.emitter.emit('data', JSON.stringify(newGameConfig));
+      const config = newGameConfig([{
+        name: 'Robot',
+        color: 'blue',
+        beginner: false,
+        handicap: 0,
+        first: true,
+      }]);
+      req.emitter.emit('data', JSON.stringify(config));
       req.emitter.emit('end');
     });
     await Promise.all(([emit, post]));
@@ -125,6 +130,68 @@ describe('ApiCreateGame', () => {
     const game = await scaffolding.ctx.gameLoader.getGame(model.id);
     expect(game).is.not.undefined;
     expect(game!.players[0].name).eq('Robot');
+  });
+
+  it('creates games with one-way 10-card initial draft enabled', async () => {
+    const post = scaffolding.post(apiCreateGame, res);
+    const emit = Promise.resolve().then(() => {
+      const config = newGameConfig([{
+        name: 'Robot 1',
+        color: 'blue',
+        beginner: false,
+        handicap: 0,
+        first: true,
+      }, {
+        name: 'Robot 2',
+        color: 'red',
+        beginner: false,
+        handicap: 0,
+        first: false,
+      }]);
+      config.initialDraft = true;
+      config.initialDraftOneWay = true;
+      req.emitter.emit('data', JSON.stringify(config));
+      req.emitter.emit('end');
+    });
+
+    await Promise.all(([emit, post]));
+
+    expect(res.statusCode).eq(statusCode.ok);
+    const model = JSON.parse(res.content) as SimpleGameModel;
+    const game = await scaffolding.ctx.gameLoader.getGame(model.id);
+    expect(game).is.not.undefined;
+    expect(game!.gameOptions.initialDraftOneWay).eq(true);
+  });
+
+  it('ignores one-way 10-card initial draft when initial draft is disabled', async () => {
+    const post = scaffolding.post(apiCreateGame, res);
+    const emit = Promise.resolve().then(() => {
+      const config = newGameConfig([{
+        name: 'Robot 1',
+        color: 'blue',
+        beginner: false,
+        handicap: 0,
+        first: true,
+      }, {
+        name: 'Robot 2',
+        color: 'red',
+        beginner: false,
+        handicap: 0,
+        first: false,
+      }]);
+      config.initialDraft = false;
+      config.initialDraftOneWay = true;
+      req.emitter.emit('data', JSON.stringify(config));
+      req.emitter.emit('end');
+    });
+
+    await Promise.all(([emit, post]));
+
+    expect(res.statusCode).eq(statusCode.ok);
+    const model = JSON.parse(res.content) as SimpleGameModel;
+    const game = await scaffolding.ctx.gameLoader.getGame(model.id);
+    expect(game).is.not.undefined;
+    expect(game!.gameOptions.initialDraftOneWay).eq(false);
   });
 
 

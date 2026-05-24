@@ -137,6 +137,7 @@ export class ApiCreateGame extends Handler {
             includedCards: gameReq.includedCards,
             includeFanMA: gameReq.includeFanMA,
             initialDraftVariant: gameReq.initialDraft,
+            initialDraftOneWay: gameReq.initialDraftOneWay === true,
             modularMA: gameReq.modularMA,
             moonExpansion: gameReq.expansions.moon,
             moonStandardProjectVariant: gameReq.moonStandardProjectVariant,
@@ -186,4 +187,3 @@ export class ApiCreateGame extends Handler {
     });
   }
 }
-

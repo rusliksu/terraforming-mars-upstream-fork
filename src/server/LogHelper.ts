@@ -6,6 +6,7 @@ import {TileType, tileTypeToString} from '../common/TileType';
 import {IColony} from './colonies/IColony';
 import {CardResource} from '../common/CardResource';
 import {From} from './logs/From';
+import {CardName} from '../common/cards/CardName';
 
 function resourceString(resource: CardResource | undefined, qty: number): string {
   const result = resource ?? 'resource';
@@ -64,8 +65,13 @@ export class LogHelper {
     player.game.log('${0} raised the Venus scale ${1} step(s)', (b) => b.player(player).number(steps));
   }
 
-  static logDrawnCards(player: IPlayer, cards: ReadonlyArray<ICard>, privateMessage: boolean = false) {
-    const message = cards.length === 0 ? '${0} drew no cards' : '${0} drew ${1}';
+  static logCardAction(
+    player: IPlayer,
+    action: string,
+    cards: ReadonlyArray<ICard> | ReadonlyArray<CardName>,
+    privateMessage: boolean = false,
+  ) {
+    const message = cards.length === 0 ? '${0} ' + action + ' no cards' : '${0} ' + action + ' ${1}';
     const options = privateMessage ? {reservedFor: player} : {};
 
     player.game.log(message, (b) => {
@@ -76,9 +82,57 @@ export class LogHelper {
       }
 
       if (cards.length > 0) {
-        b.cards(cards);
+        if (typeof cards[0] === 'string') {
+          b.cardNames(cards as ReadonlyArray<CardName>);
+        } else {
+          b.cards(cards as ReadonlyArray<ICard>);
+        }
       }
     }, options);
+  }
+
+  static logPrivateCardSelection(
+    player: IPlayer,
+    action: string,
+    picked: ReadonlyArray<ICard> | ReadonlyArray<CardName>,
+    skipped: ReadonlyArray<ICard> | ReadonlyArray<CardName>,
+  ) {
+    if (picked.length > 0 && skipped.length > 0) {
+      player.game.log('You ' + action + ' ${0} skipping ${1}', (b) => {
+        if (typeof picked[0] === 'string') {
+          b.cardNames(picked as ReadonlyArray<CardName>);
+        } else {
+          b.cards(picked as ReadonlyArray<ICard>);
+        }
+        if (typeof skipped[0] === 'string') {
+          b.cardNames(skipped as ReadonlyArray<CardName>);
+        } else {
+          b.cards(skipped as ReadonlyArray<ICard>);
+        }
+      }, {reservedFor: player});
+      return;
+    }
+    if (picked.length > 0) {
+      this.logCardAction(player, action, picked, true);
+      return;
+    }
+    if (skipped.length > 0) {
+      player.game.log('You skipped ${0}', (b) => {
+        if (typeof skipped[0] === 'string') {
+          b.cardNames(skipped as ReadonlyArray<CardName>);
+        } else {
+          b.cards(skipped as ReadonlyArray<ICard>);
+        }
+      }, {reservedFor: player});
+    }
+  }
+
+  static logOfferedCards(player: IPlayer, cards: ReadonlyArray<ICard> | ReadonlyArray<CardName>) {
+    this.logCardAction(player, 'were offered', cards, true);
+  }
+
+  static logDrawnCards(player: IPlayer, cards: ReadonlyArray<ICard> | ReadonlyArray<CardName>, privateMessage: boolean = false) {
+    this.logCardAction(player, 'drew', cards, privateMessage);
   }
 
   static logRevealedCards(player: IPlayer, cards: ReadonlyArray<ICard>) {

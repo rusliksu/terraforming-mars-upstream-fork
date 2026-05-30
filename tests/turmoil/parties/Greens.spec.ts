@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import {IGame} from '../../../src/server/IGame';
 import {Space} from '../../../src/server/boards/Space';
-import {setRulingParty, addGreenery, runAllActions} from '../../TestingUtils';
+import {setRulingParty, addGreenery, runAllActions, formatMessage} from '../../TestingUtils';
 import {TestPlayer} from '../../TestPlayer';
 import {GREENS_BONUS_1, GREENS_BONUS_2, GREENS_POLICY_4} from '../../../src/server/turmoil/parties/Greens';
 import {Lichen} from '../../../src/server/cards/base/Lichen';
@@ -86,5 +86,20 @@ describe('Greens', () => {
     orOptions.options[0].cb();
     expect(tardigrades.resourceCount).to.eq(2);
     expect(player.megaCredits).to.eq(0);
+  });
+
+  it('Ruling policy 4: logs single-card microbe source', () => {
+    setRulingParty(game, PartyName.GREENS, 'gp04');
+    const tardigrades = new Tardigrades();
+    player.playedCards.push(tardigrades);
+    player.megaCredits = 5;
+    game.gameLog = [];
+
+    GREENS_POLICY_4.action(player);
+    game.deferredActions.runNext();
+    const orOptions = cast(game.deferredActions.peek()!.execute(), OrOptions);
+    orOptions.options[0].cb();
+
+    expect(game.gameLog.map(formatMessage)).contains('blue added 2 Microbe(s) to Tardigrades from Greens');
   });
 });

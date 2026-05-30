@@ -125,6 +125,8 @@ describe('ApiCreateGame', () => {
     const game = await scaffolding.ctx.gameLoader.getGame(model.id);
     expect(game).is.not.undefined;
     expect(game!.players[0].name).eq('Robot');
+    expect(game!.gameOptions.boardSelection).eq(RandomBoardOption.OFFICIAL);
+    expect(ApiCreateGame.boardOptions(RandomBoardOption.OFFICIAL)).contains(game!.gameOptions.boardName);
   });
 
 

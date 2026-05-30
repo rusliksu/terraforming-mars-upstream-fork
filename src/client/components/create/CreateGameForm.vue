@@ -584,7 +584,7 @@ import CardsFilter from '@/client/components/create/CardsFilter.vue';
 import AppButton from '@/client/components/common/AppButton.vue';
 import {playerColorClass} from '@/common/utils/utils';
 import {RandomMAOptionType} from '@/common/ma/RandomMAOptionType';
-import {GameId} from '@/common/Types';
+import {GameId, JSONObject} from '@/common/Types';
 import {AgendaStyle} from '@/common/turmoil/Types';
 import PreferencesIcon from '@/client/components/PreferencesIcon.vue';
 import {getCard} from '@/client/cards/ClientCardManifest';
@@ -594,6 +594,7 @@ import {CreateGameModel} from './CreateGameModel';
 import {paths} from '@/common/app/paths';
 import {JSONProcessor} from './JSONProcessor';
 import {defaultCreateGameModel} from './defaultCreateGameModel';
+import {CreateGameSettingsStorage} from './CreateGameSettingsStorage';
 import {getColony} from '@/client/colonies/ClientColonyManifest';
 import {RULEBOOK_URLS, WIKI, WIKI_URLS} from '@/client/utils/WikiLinks';
 import {setDocumentTitle} from '@/client/utils/documentTitle';
@@ -676,6 +677,7 @@ export default defineComponent({
   },
   mounted() {
     setDocumentTitle('Create New Game');
+    this.restoreLastSettings();
   },
   computed: {
     wikiUrls(): typeof RULEBOOK_URLS & typeof WIKI_URLS {
@@ -715,6 +717,40 @@ export default defineComponent({
     },
   },
   methods: {
+    restoreLastSettings() {
+      const lastSettings = CreateGameSettingsStorage.getLastSettings();
+      if (lastSettings === undefined) {
+        return;
+      }
+      try {
+        this.applySettings(lastSettings);
+      } catch (e) {
+        console.warn('Could not restore last game settings:', e);
+      }
+    },
+    applySettings(json: JSONObject) {
+      const component: CreateGameModel = this;
+      const refs = this.typedRefs;
+      const processor = new JSONProcessor(component);
+      this.uploading = true;
+      processor.applyJSON(json);
+      nextTick(() => {
+        try {
+          if (component.showBannedCards && refs.cardsFilter) {
+            refs.cardsFilter.selected = processor.bannedCards;
+          }
+          if (component.showIncludedCards && refs.cardsFilter2) {
+            refs.cardsFilter2.selected = processor.includedCards;
+          }
+          if (!component.seededGame) {
+            component.seed = Math.random();
+          }
+          component.solarPhaseOption = Boolean(processor.solarPhaseOption);
+        } finally {
+          this.uploading = false;
+        }
+      });
+    },
     async downloadSettings() {
       const serializedData = await this.serializeSettings();
 
@@ -1217,6 +1253,7 @@ export default defineComponent({
       if (dataToSend === undefined) {
         return;
       }
+      CreateGameSettingsStorage.saveLastSettings(JSON.parse(dataToSend) as JSONObject);
       const onSuccess = (json: any) => {
         if (json.players.length === 1) {
           window.location.href = 'player?id=' + json.players[0].id;

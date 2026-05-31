@@ -152,6 +152,7 @@ export class ApiCreateGame extends Handler {
             requiresMoonTrackCompletion: gameReq.requiresMoonTrackCompletion,
             requiresVenusTrackCompletion: gameReq.requiresVenusTrackCompletion,
             showOtherPlayersVP: gameReq.showOtherPlayersVP,
+            privateHands: gameReq.privateHands !== false,
             showTimers: gameReq.showTimers,
             shuffleMapOption: gameReq.shuffleMapOption,
             solarPhaseOption: gameReq.solarPhaseOption,
@@ -186,4 +187,3 @@ export class ApiCreateGame extends Handler {
     });
   }
 }
-

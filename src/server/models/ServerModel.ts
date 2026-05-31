@@ -116,11 +116,12 @@ export class Server {
   }
 
   public static getSpectatorModel(game: IGame): SpectatorModel {
+    const includePrivateCards = game.phase === Phase.END || game.gameOptions.privateHands === false;
     return {
       color: 'neutral',
       id: game.spectatorId,
       game: this.getGameModel(game),
-      players: game.playersInGenerationOrder.map((p) => this.getPlayer(p, false)),
+      players: game.playersInGenerationOrder.map((p) => this.getPlayer(p, false, {includePrivateCards})),
       thisPlayer: undefined,
       runId: runId,
     };
@@ -208,7 +209,7 @@ export class Server {
   }
 
   /** When the model is for this player, show the VP. Players like seeing their own VP even if the feature is off. */
-  public static getPlayer(player: IPlayer, modelIsForThisPlayer: boolean): PublicPlayerModel {
+  public static getPlayer(player: IPlayer, modelIsForThisPlayer: boolean, options: {includePrivateCards?: boolean} = {}): PublicPlayerModel {
     const game = player.game;
     const useHandicap = game.players.some((p) => p.handicap !== 0);
     const model: PublicPlayerModel = {
@@ -284,6 +285,14 @@ export class Server {
       model.victoryPointsBreakdown = player.getVictoryPoints();
       model.victoryPointsByGeneration = player.victoryPointsByGeneration;
       model.globalParameterSteps = player.globalParameterSteps;
+    }
+
+    if (options.includePrivateCards === true) {
+      model.spectatorCards = {
+        cardsInHand: cardsToModel(player, player.cardsInHand, {showCalculatedCost: true}),
+        ceoCardsInHand: cardsToModel(player, Array.from(player.ceoCardsInHand)),
+        preludeCardsInHand: cardsToModel(player, player.preludeCardsInHand),
+      };
     }
 
     model.deltaProject = player.deltaProjectData;
@@ -441,6 +450,7 @@ export class Server {
       preludeDraftVariant: options.preludeDraftVariant,
       ceosDraftVariant: options.ceosDraftVariant,
       politicalAgendasExtension: options.politicalAgendasExtension,
+      privateHands: options.privateHands,
       removeNegativeGlobalEvents: options.removeNegativeGlobalEventsOption,
       showOtherPlayersVP: options.showOtherPlayersVP,
       showTimers: options.showTimers,

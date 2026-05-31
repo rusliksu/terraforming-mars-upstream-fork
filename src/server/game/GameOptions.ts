@@ -17,6 +17,7 @@ export type GameOptions = {
   showTimers: boolean;
   fastModeOption: boolean;
   showOtherPlayersVP: boolean;
+  privateHands: boolean;
 
   // Extensions -- Deprecated, except when importing JSON
   corporateEra: boolean;
@@ -121,6 +122,7 @@ export const DEFAULT_GAME_OPTIONS: GameOptions = {
   moonStandardProjectVariant1: false,
   pathfindersExpansion: false,
   politicalAgendasExtension: 'Standard',
+  privateHands: true,
   preludeDraftVariant: false,
   ceosDraftVariant: false,
   preludeExtension: false,

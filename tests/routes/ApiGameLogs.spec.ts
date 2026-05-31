@@ -133,6 +133,48 @@ describe('ApiGameLogs', () => {
     });
   });
 
+  it('omits private logs for spectators before game end', async () => {
+    const yellowPlayer = TestPlayer.YELLOW.newPlayer();
+    const orangePlayer = TestPlayer.ORANGE.newPlayer();
+    const game = Game.newInstance('game-id', [yellowPlayer, orangePlayer], yellowPlayer, 'spectatorid');
+    await scaffolding.ctx.gameLoader.add(game);
+
+    game.gameLog.length = 0;
+    game.log('All players see this.');
+    game.log('Yellow player sees this.', (_b) => {}, {reservedFor: yellowPlayer});
+    game.log('Orange player sees this.', (_b) => {}, {reservedFor: orangePlayer});
+
+    scaffolding.url = '/api/game/logs?id=' + game.spectatorId;
+    await scaffolding.get(ApiGameLogs.INSTANCE, res);
+    const messages = JSON.parse(res.content);
+
+    expect(messages).has.length(1);
+    expect(messages[0].message).eq('All players see this.');
+  });
+
+  it('shows private logs for spectators at game end', async () => {
+    const yellowPlayer = TestPlayer.YELLOW.newPlayer();
+    const orangePlayer = TestPlayer.ORANGE.newPlayer();
+    const game = Game.newInstance('game-id', [yellowPlayer, orangePlayer], yellowPlayer, 'spectatorid');
+    await scaffolding.ctx.gameLoader.add(game);
+
+    game.gameLog.length = 0;
+    game.log('All players see this.');
+    game.log('Yellow player sees this.', (_b) => {}, {reservedFor: yellowPlayer});
+    game.log('Orange player sees this.', (_b) => {}, {reservedFor: orangePlayer});
+    game.phase = Phase.END;
+
+    scaffolding.url = '/api/game/logs?id=' + game.spectatorId;
+    await scaffolding.get(ApiGameLogs.INSTANCE, res);
+    const messages = JSON.parse(res.content);
+
+    expect(messages.map((message: {message: string}) => message.message)).deep.eq([
+      'All players see this.',
+      'Yellow player sees this.',
+      'Orange player sees this.',
+    ]);
+  });
+
   it('Cannot pull full logs before game end', async () => {
     const player = TestPlayer.BLACK.newPlayer();
     scaffolding.url = '/api/game/logs?id=' + player.id + '&full';

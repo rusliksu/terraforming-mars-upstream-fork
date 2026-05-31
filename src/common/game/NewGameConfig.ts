@@ -47,6 +47,7 @@ export interface NewGameConfig {
   showTimers: boolean;
   fastModeOption: boolean;
   showOtherPlayersVP: boolean;
+  privateHands?: boolean;
 
   // Extensions
   // aresHazards: boolean;

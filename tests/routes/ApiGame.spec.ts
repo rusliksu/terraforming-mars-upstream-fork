@@ -86,6 +86,7 @@ describe('ApiGame', () => {
           'ceosDraftVariant': false,
           'politicalAgendasExtension': 'Standard',
           'preludeDraftVariant': false,
+          'privateHands': true,
           'randomMA': 'No randomization',
           'removeNegativeGlobalEvents': false,
           'requiresMoonTrackCompletion': false,

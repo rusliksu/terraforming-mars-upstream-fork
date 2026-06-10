@@ -9,6 +9,7 @@ import {testGame} from '../TestGame';
 import {Server} from '../../src/server/models/ServerModel';
 import {GlobalParameter} from '../../src/common/GlobalParameter';
 import {Phase} from '../../src/common/Phase';
+import {SearchForLife} from '../../src/server/cards/base/SearchForLife';
 
 describe('ServerModel', () => {
   let player: TestPlayer;
@@ -60,6 +61,34 @@ describe('ServerModel', () => {
     const response = Server.getSpectatorModel(game);
     expect(response.players[0].victoryPointsBreakdown.total).eq(0);
     expect(response.players[1].victoryPointsBreakdown.total).eq(0);
+  });
+
+  it('does not include spectator hand cards when private hands are enabled', () => {
+    [game, player] = testGame(1, {privateHands: true});
+    player.cardsInHand.push(new SearchForLife());
+
+    const response = Server.getSpectatorModel(game);
+
+    expect(response.players[0].spectatorCards).is.undefined;
+  });
+
+  it('includes spectator hand cards when private hands are disabled', () => {
+    [game, player] = testGame(1, {privateHands: false});
+    player.cardsInHand.push(new SearchForLife());
+
+    const response = Server.getSpectatorModel(game);
+
+    expect(response.players[0].spectatorCards?.cardsInHand.map((card) => card.name)).deep.eq(['Search For Life']);
+  });
+
+  it('includes spectator hand cards at game end', () => {
+    [game, player] = testGame(1, {privateHands: true});
+    player.cardsInHand.push(new SearchForLife());
+    game.phase = Phase.END;
+
+    const response = Server.getSpectatorModel(game);
+
+    expect(response.players[0].spectatorCards?.cardsInHand.map((card) => card.name)).deep.eq(['Search For Life']);
   });
 
   it('Should include globalParameterSteps at game end', () => {

@@ -19,6 +19,9 @@
       Playing ${0} will cost ${1} M€ more because ${2} are in power
     </div>
   </template>
+  <div v-if="card !== undefined && card.warning !== undefined" class="card-warning">
+    {{ $t(card.warning) }}
+  </div>
   <WarningsComponent v-if="card !== undefined" :warnings="card.warnings"/>
 
   <PaymentForm

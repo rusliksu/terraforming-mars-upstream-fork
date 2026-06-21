@@ -5,6 +5,7 @@ import {SelectPlayer} from '../../../src/server/inputs/SelectPlayer';
 import {Resource} from '../../../src/common/Resource';
 import {TestPlayer} from '../../TestPlayer';
 import {cast} from '@/common/utils/utils';
+import {LogMessageDataType} from '../../../src/common/logs/LogMessageDataType';
 
 describe('LawSuit', () => {
   let card: LawSuit;
@@ -49,6 +50,24 @@ describe('LawSuit', () => {
 
     const play = card.play(player);
     expect(play).instanceOf(SelectPlayer);
+  });
+
+  it('Names eligible targets before player selection', () => {
+    player.removingPlayers.push(player2.id);
+
+    expect(card.canPlay(player)).is.true;
+    expect(card.warning).deep.eq({
+      message: 'Eligible targets: ${0}',
+      data: [{type: LogMessageDataType.RAW_STRING, value: 'player2'}],
+    });
+  });
+
+  it('Uses a generic player selection title', () => {
+    player.removingPlayers.push(player2.id);
+
+    const play = cast(card.play(player), SelectPlayer);
+
+    expect(play.title).eq('Select player to sue.');
   });
 
   it('Steals resources correctly', () => {

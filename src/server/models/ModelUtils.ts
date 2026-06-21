@@ -77,6 +77,9 @@ export function cardsToModel(
     if (card.warnings.size > 0) {
       model.warnings = Array.from(card.warnings);
     }
+    if (card.warning !== undefined) {
+      model.warning = card.warning;
+    }
     return model;
   });
 }

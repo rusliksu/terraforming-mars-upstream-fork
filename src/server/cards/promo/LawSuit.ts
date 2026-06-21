@@ -10,6 +10,7 @@ import {CardRenderer} from '../render/CardRenderer';
 import {Size} from '../../../common/cards/render/Size';
 import {any} from '../render/DynamicVictoryPoints';
 import {all} from '../Options';
+import {message} from '../../logs/MessageBuilder';
 
 export class LawSuit extends Card implements IProjectCard {
   constructor() {
@@ -36,11 +37,18 @@ export class LawSuit extends Card implements IProjectCard {
   }
 
   public override bespokeCanPlay(player: IPlayer) {
-    return this.targets(player).length > 0;
+    const targets = this.targets(player);
+    if (targets.length === 0) {
+      this.warning = undefined;
+      return false;
+    }
+    const targetNames = targets.map((player) => player.name).join(', ');
+    this.warning = message('Eligible targets: ${0}', (b) => b.rawString(targetNames));
+    return true;
   }
 
   public override bespokePlay(player: IPlayer) {
-    return new SelectPlayer(this.targets(player), 'Select player to sue (steal 3 M€ from)', 'Steal M€')
+    return new SelectPlayer(this.targets(player), 'Select player to sue.', 'Steal M€')
       .andThen((suedPlayer: IPlayer) => {
         const amount = Math.min(3, suedPlayer.megaCredits);
         if (amount === 0) {
@@ -71,4 +79,3 @@ export class LawSuit extends Card implements IProjectCard {
     }
   }
 }
-

@@ -4,6 +4,7 @@ import {Resource} from '../Resource';
 import {AdditionalProjectCosts, CardDiscount, StandardProjectCanPayWith} from '../cards/Types';
 import {Tag} from '../cards/Tag';
 import {Warning} from '../cards/Warning';
+import {Message} from '../logs/Message';
 
 export interface CardModel {
     name: CardName;
@@ -14,6 +15,7 @@ export interface CardModel {
     isDisabled?: boolean; // Used with Pharmacy Union
     additionalProjectCosts?: AdditionalProjectCosts;
     warnings?: ReadonlyArray<Warning>;
+    warning?: string | Message;
     reserveUnits?: Readonly<Units>; // Written for The Moon, but useful in other contexts.
     bonusResource?: Array<Resource>; // Used with the Mining cards and Robotic Workforce
     cloneTag?: Tag; // Used with Pathfinders

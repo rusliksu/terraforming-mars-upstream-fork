@@ -1212,6 +1212,7 @@ export class Player implements IPlayer {
     const playableCards: Array<IProjectCard> = [];
     for (const card of candidateCards) {
       card.warnings.clear();
+      card.warning = undefined;
       card.additionalProjectCosts = undefined;
       if (this.canPlay(card)) {
         playableCards.push(card);
@@ -1249,6 +1250,7 @@ export class Player implements IPlayer {
   }
 
   public canPlay(card: IProjectCard): boolean {
+    card.warning = undefined;
     card.additionalProjectCosts = undefined;
     const options = this.affordOptionsForCard(card);
     const canAfford = this.canAffordInternal(options);

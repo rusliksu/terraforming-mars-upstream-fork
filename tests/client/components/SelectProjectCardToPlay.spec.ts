@@ -92,6 +92,17 @@ describe('SelectProjectCardToPlay', () => {
     expect(saveResponse.payment).deep.eq(Payment.of({heat: 3, megacredits: 7}));
   });
 
+  it('shows a selected card warning', async () => {
+    const wrapper = setupCardForPurchase(
+      CardName.BIRDS, 10,
+      {megacredits: 10},
+      {cards: [{name: CardName.BIRDS, calculatedCost: 10, warning: 'Eligible targets: player2'}]});
+
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.text()).contains('Eligible targets: player2');
+  });
+
   it('max heat', async () => {
     const wrapper = setupCardForPurchase(
       CardName.BIRDS, 10,

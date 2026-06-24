@@ -28,6 +28,7 @@ import {AdditionalProjectCosts} from '../../common/cards/Types';
 import {GlobalParameter} from '../../common/GlobalParameter';
 import {Warning} from '../../common/cards/Warning';
 import {Resource} from '@/common/Resource';
+import {Message} from '../../common/logs/Message';
 
 /**
  * Cards that do not need a cost attribute.
@@ -110,6 +111,7 @@ export abstract class Card implements ICard {
   protected readonly properties: InternalProperties;
   public resourceCount = 0;
   public warnings = new Set<Warning>();
+  public warning?: string | Message = undefined;
   public additionalProjectCosts?: AdditionalProjectCosts = undefined;
 
   private internalize(external: StaticCardProperties): InternalProperties {

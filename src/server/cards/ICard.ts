@@ -23,6 +23,7 @@ import {Resource} from '../../common/Resource';
 import {Units} from '../../common/Units';
 import {SerializedCard} from '../SerializedCard';
 import {UndergroundResourceToken} from '../../common/underworld/UndergroundResourceToken';
+import {Message} from '../../common/logs/Message';
 
 /*
  * Represents a card which has an action that itself allows a player
@@ -166,6 +167,8 @@ export interface ICard {
    * See: IProjectCard.additionalProjectCosts
    */
   readonly warnings: Set<Warning>;
+  /** Dynamic per-instance warning to show when this card is selected for play. */
+  warning?: string | Message;
 
   readonly behavior?: Behavior,
 

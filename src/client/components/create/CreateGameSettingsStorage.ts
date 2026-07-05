@@ -4,6 +4,7 @@ const SETTINGS_KEY = 'tm_last_game_settings';
 
 function getLocalStorage(): Storage | undefined {
   try {
+    // Access can throw SecurityError for opaque origins.
     return typeof localStorage === 'undefined' ? undefined : localStorage;
   } catch {
     return undefined;
@@ -20,12 +21,8 @@ export class CreateGameSettingsStorage {
   constructor(private readonly storage?: Storage) {
   }
 
-  private getStorage(): Storage | undefined {
-    return this.storage ?? getLocalStorage();
-  }
-
   public saveSettings(settings: JSONObject): void {
-    const storage = this.getStorage();
+    const storage = this.storage ?? getLocalStorage();
     if (storage === undefined) {
       return;
     }
@@ -37,7 +34,7 @@ export class CreateGameSettingsStorage {
   }
 
   public loadSettings(): JSONObject | undefined {
-    const storage = this.getStorage();
+    const storage = this.storage ?? getLocalStorage();
     if (storage === undefined) {
       return undefined;
     }
@@ -54,7 +51,7 @@ export class CreateGameSettingsStorage {
   }
 
   public clearSettings(): void {
-    const storage = this.getStorage();
+    const storage = this.storage ?? getLocalStorage();
     if (storage === undefined) {
       return;
     }

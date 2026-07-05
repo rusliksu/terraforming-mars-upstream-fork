@@ -601,6 +601,7 @@ import {RULEBOOK_URLS, WIKI, WIKI_URLS} from '@/client/utils/WikiLinks';
 import {setDocumentTitle} from '@/client/utils/documentTitle';
 
 const REVISED_COUNT_ALGORITHM = false;
+const createGameSettingsStorage = new CreateGameSettingsStorage();
 
 
 type Refs = {
@@ -719,7 +720,7 @@ export default defineComponent({
   },
   methods: {
     restoreLastSettings() {
-      const settings = new CreateGameSettingsStorage().loadSettings();
+      const settings = createGameSettingsStorage.loadSettings();
       if (settings === undefined) {
         return;
       }
@@ -771,7 +772,7 @@ export default defineComponent({
       }
     },
     resetSettings() {
-      new CreateGameSettingsStorage().clearSettings();
+      createGameSettingsStorage.clearSettings();
       Object.assign(this, defaultCreateGameModel(), {
         preludeToggled: false,
         uploading: false,
@@ -1260,7 +1261,7 @@ export default defineComponent({
       if (dataToSend === undefined) {
         return;
       }
-      new CreateGameSettingsStorage().saveSettings(JSON.parse(dataToSend) as JSONObject);
+      createGameSettingsStorage.saveSettings(JSON.parse(dataToSend) as JSONObject);
       const onSuccess = (json: any) => {
         if (json.players.length === 1) {
           window.location.href = 'player?id=' + json.players[0].id;

@@ -24,13 +24,14 @@ describe('FloatingTradeHub', () => {
     player.playedCards.push(card);
   });
 
-  it('Add resources, simple', () => {
+  it('adds floaters immediately when Floating Trade Hub is the only target', () => {
     cast(card.action(player), undefined);
+
     expect(card.resourceCount).eq(2);
   });
 
 
-  it('Add resources', () => {
+  it('prompts for a floater card when multiple targets are available', () => {
     player.playedCards.push(newProjectCard(CardName.TARDIGRADES)!);
     player.playedCards.push(newProjectCard(CardName.AERIAL_MAPPERS)!);
     const selectCard = cast(card.action(player), SelectCard);
@@ -47,6 +48,7 @@ describe('FloatingTradeHub', () => {
 
     const orOptions = cast(card.action(player), OrOptions);
 
+    expect(orOptions.options).has.length(2);
     const andOptions = cast(orOptions.options[1], AndOptions);
     const selectAmount = cast(andOptions.options[0], SelectAmount);
     const selectResource = cast(andOptions.options[1], SelectResource);
@@ -68,9 +70,23 @@ describe('FloatingTradeHub', () => {
     card.resourceCount = 5;
 
     const orOptions = cast(card.action(player), OrOptions);
-    const addFloaters = cast(orOptions.options[0], SelectOption);
+    const selectOption = cast(orOptions.options[0], SelectOption);
 
-    addFloaters.cb(undefined);
+    selectOption.cb(undefined);
+
+    expect(card.resourceCount).eq(7);
+  });
+
+  it('Act - add resources branch prompts when multiple targets are available', () => {
+    card.resourceCount = 5;
+    player.playedCards.push(newProjectCard(CardName.AERIAL_MAPPERS)!);
+
+    const orOptions = cast(card.action(player), OrOptions);
+    const selectCard = cast(orOptions.options[0], SelectCard);
+
+    expect(selectCard.cards.map(toName)).deep.eq([card.name, CardName.AERIAL_MAPPERS]);
+
+    selectCard.cb([card]);
 
     expect(card.resourceCount).eq(7);
   });

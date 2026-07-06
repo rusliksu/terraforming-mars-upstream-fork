@@ -37,11 +37,11 @@ export class FloatingTradeHub extends PreludeCard implements IActionCard {
 
   public action(player: IPlayer) {
     const floaterCards = player.getResourceCards(CardResource.FLOATER);
-    if (this.resourceCount === 0 && floaterCards.length === 1) {
-      this.add2Floaters(player, floaterCards[0]);
-      return undefined;
+    const floatingTradeHub = floaterCards.find((card) => card.name === this.name);
+    if (this.resourceCount === 0 && floaterCards.length === 1 && floatingTradeHub !== undefined) {
+      return this.add2Floaters(player, floatingTradeHub);
     }
-    const add2Floaters = this.add2FloatersOption(player, floaterCards);
+    const add2Floaters = this.add2FloatersOption(player, floaterCards, floatingTradeHub);
     const selectResource = new SelectResource('Select resource to gain');
     const selectAmount = new SelectAmount('Select amount of floaters to remove', undefined, 1, this.resourceCount, true);
     const removeFloaters = new AndOptions(selectAmount, selectResource)
@@ -58,20 +58,19 @@ export class FloatingTradeHub extends PreludeCard implements IActionCard {
     return new OrOptions(add2Floaters, removeFloaters);
   }
 
-  private add2FloatersOption(player: IPlayer, floaterCards: Array<ICard>) {
-    if (floaterCards.length === 1) {
+  private add2FloatersOption(player: IPlayer, floaterCards: Array<ICard>, floatingTradeHub: ICard | undefined) {
+    if (floaterCards.length === 1 && floatingTradeHub !== undefined) {
       return new SelectOption('Add 2 floaters to Floating Trade Hub', 'Add floaters').andThen(() => {
-        this.add2Floaters(player, floaterCards[0]);
-        return undefined;
+        return this.add2Floaters(player, floatingTradeHub);
       });
     }
     return new SelectCard('Select card to gain 2 floaters', undefined, floaterCards).andThen(([card]) => {
-      this.add2Floaters(player, card);
-      return undefined;
+      return this.add2Floaters(player, card);
     });
   }
 
-  private add2Floaters(player: IPlayer, card: ICard) {
+  private add2Floaters(player: IPlayer, card: ICard): undefined {
     player.addResourceTo(card, {qty: 2, log: true});
+    return undefined;
   }
 }

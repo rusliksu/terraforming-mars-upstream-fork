@@ -24,6 +24,10 @@ describe('FloatingTradeHub', () => {
     player.playedCards.push(card);
   });
 
+  it('canAct', () => {
+    expect(card.canAct()).is.true;
+  });
+
   it('adds floaters immediately when Floating Trade Hub is the only target', () => {
     cast(card.action(player), undefined);
 
@@ -42,7 +46,7 @@ describe('FloatingTradeHub', () => {
     expect(card.resourceCount).eq(2);
   });
 
-  it('Act - select resource', () => {
+  it('act - select resource', () => {
     card.resourceCount = 5;
 
     const orOptions = cast(card.action(player), OrOptions);
@@ -65,7 +69,7 @@ describe('FloatingTradeHub', () => {
     expect(card.resourceCount).to.eq(1);
   });
 
-  it('Act - add resources branch autoselects the only target card when converting floaters is available', () => {
+  it('act - add resources branch autoselects the only target card when converting floaters is available', () => {
     card.resourceCount = 5;
 
     const orOptions = cast(card.action(player), OrOptions);
@@ -76,7 +80,7 @@ describe('FloatingTradeHub', () => {
     expect(card.resourceCount).eq(7);
   });
 
-  it('Act - add resources branch prompts when multiple targets and converting floaters are available', () => {
+  it('act - add resources branch prompts when multiple targets and converting floaters are available', () => {
     card.resourceCount = 5;
     player.playedCards.push(newProjectCard(CardName.AERIAL_MAPPERS)!);
 

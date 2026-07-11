@@ -59,6 +59,7 @@ describe('FloatingRefinery', () => {
 
   it('act - removes from another card when it is the only eligible target', () => {
     card.resourceCount = 1;
+    // floater1 is the only eligible card.
     floater1.resourceCount = 2;
     floater2.resourceCount = 1;
     other.resourceCount = 1;

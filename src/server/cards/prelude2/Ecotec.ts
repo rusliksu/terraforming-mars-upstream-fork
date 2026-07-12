@@ -8,7 +8,7 @@ import {CardResource} from '../../../common/CardResource';
 import {Resource} from '../../../common/Resource';
 import {OrOptions} from '../../inputs/OrOptions';
 import {SelectOption} from '../../inputs/SelectOption';
-import {SelectCard} from '../../inputs/SelectCard';
+import {selectCardOrOption} from '../../inputs/SelectCard';
 import {ICorporationCard} from '../corporation/ICorporationCard';
 import {message} from '../../logs/MessageBuilder';
 
@@ -53,19 +53,15 @@ export class Ecotec extends CorporationCard implements ICorporationCard {
         return undefined;
       });
 
-      const addMicrobe = microbeCards.length === 1 ?
-        new SelectOption(message('Add microbe to ${0}', (b) => b.card(microbeCards[0])), 'Add microbe').andThen(() => {
-          player.addResourceTo(microbeCards[0], {qty: 1, log: true});
+      const addMicrobe = selectCardOrOption(microbeCards, {
+        title: 'Select card to gain a microbe',
+        buttonLabel: 'Add microbe',
+        singleTitle: (card) => message('Add microbe to ${0}', (b) => b.card(card)),
+        onSelect: (card) => {
+          player.addResourceTo(card, {qty: 1, log: true});
           return undefined;
-        }) :
-        new SelectCard(
-          'Select card to gain a microbe',
-          'Add microbe',
-          microbeCards)
-          .andThen(([card]) => {
-            player.addResourceTo(card, {qty: 1, log: true});
-            return undefined;
-          });
+        },
+      });
 
       player.defer(
         () => new OrOptions(addMicrobe, gainPlant),

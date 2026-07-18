@@ -23,7 +23,7 @@ describe('Ecotec', () => {
     const tardigrades = new Tardigrades();
     player.playedCards.push(tardigrades);
 
-    card.process(player, 1);
+    card.onCardPlayed(player, tardigrades);
     const options = cast(churn(undefined, player), OrOptions);
     const addMicrobe = cast(options.options[0], SelectOption);
     addMicrobe.cb(undefined);
@@ -36,7 +36,7 @@ describe('Ecotec', () => {
     const ants = new Ants();
     player.playedCards.push(tardigrades, ants);
 
-    card.process(player, 1);
+    card.onCardPlayed(player, tardigrades);
     const options = cast(churn(undefined, player), OrOptions);
     const addMicrobe = cast(options.options[0], SelectCard);
     addMicrobe.cb([ants]);

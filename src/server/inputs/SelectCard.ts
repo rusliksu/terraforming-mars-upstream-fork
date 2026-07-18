@@ -10,7 +10,7 @@ import {cardsToModel} from '../models/ModelUtils';
 import {InputError} from './InputError';
 import {SelectOption} from './SelectOption';
 
-export type SelectCardOrOptionOptions<T extends ICard> = {
+type SelectCardOrOptionOptions<T extends ICard> = {
   title: string | Message;
   buttonLabel: string;
   singleTitle: (card: T) => string | Message;

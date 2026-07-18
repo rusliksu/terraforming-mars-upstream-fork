@@ -35,10 +35,9 @@ describe('SortableCards', () => {
     expect(cards[0].props().card.name).to.eq(CardName.ANTS);
     expect(cards[1].props().card.name).to.eq(CardName.CARTEL);
     const draggers = sortable.findAll('[draggable=true]');
+    draggers[0].element.getBoundingClientRect = () => ({left: 0, width: 200} as DOMRect);
     await draggers[1].trigger('dragstart');
-    await sortable.vm.$nextTick();
-    const droppers = sortable.findAll('.drop-target');
-    await droppers[0].trigger('dragover');
+    await draggers[0].trigger('dragover', {clientX: 50});
     await draggers[1].trigger('dragend');
     cards = sortable.findAllComponents({
       name: 'Card',
@@ -79,23 +78,22 @@ describe('SortableCards', () => {
     expect(cards[1].props().card.name).to.eq(CardName.ANTS);
     expect(cards[2].props().card.name).to.eq(CardName.BIRDS);
     const draggers = sortable.findAll('[draggable=true]');
+    draggers[2].element.getBoundingClientRect = () => ({left: 0, width: 200} as DOMRect);
     await draggers[0].trigger('dragstart');
-    await sortable.vm.$nextTick();
-    const droppers = sortable.findAll('.drop-target');
-    await droppers[2].trigger('dragover');
+    await draggers[2].trigger('dragover', {clientX: 150});
     await draggers[0].trigger('dragend');
     cards = sortable.findAllComponents({
       name: 'Card',
     });
     expect(cards[0].props().card.name).to.eq(CardName.ANTS);
-    expect(cards[1].props().card.name).to.eq(CardName.CARTEL);
-    expect(cards[2].props().card.name).to.eq(CardName.BIRDS);
+    expect(cards[1].props().card.name).to.eq(CardName.BIRDS);
+    expect(cards[2].props().card.name).to.eq(CardName.CARTEL);
     const order = localStorage.getItem('cardOrderfoo');
     expect(order).not.to.be.undefined;
     expect(JSON.parse(order!)).to.deep.eq({
-      [CardName.ANTS]: 2,
+      [CardName.ANTS]: 1,
       [CardName.CARTEL]: 3,
-      [CardName.BIRDS]: 4,
+      [CardName.BIRDS]: 2,
     });
   });
 });

@@ -1,9 +1,23 @@
-import {mount} from '@vue/test-utils';
+import {mount, VueWrapper} from '@vue/test-utils';
 import {globalConfig} from './getLocalVue';
 import {expect} from 'chai';
 import {CardName} from '@/common/cards/CardName';
 import SortableCards from '@/client/components/SortableCards.vue';
 import {FakeLocalStorage} from './FakeLocalStorage';
+
+type DropPosition = 'before' | 'after';
+
+async function dragCard(sortable: VueWrapper<InstanceType<typeof SortableCards>>, sourceIndex: number, targetIndex: number, position: DropPosition) {
+  const draggers = sortable.findAll('[draggable=true]');
+  const target = draggers[targetIndex];
+  const bounds = {left: 0, width: 2};
+  // jsdom does not calculate element bounds.
+  target.element.getBoundingClientRect = () => bounds as DOMRect;
+
+  await draggers[sourceIndex].trigger('dragstart');
+  await target.trigger('dragover', {clientX: position === 'before' ? bounds.left : bounds.left + bounds.width});
+  await draggers[sourceIndex].trigger('dragend');
+}
 
 describe('SortableCards', () => {
   let localStorage: FakeLocalStorage;
@@ -34,12 +48,7 @@ describe('SortableCards', () => {
     expect(cards).has.length(2);
     expect(cards[0].props().card.name).to.eq(CardName.ANTS);
     expect(cards[1].props().card.name).to.eq(CardName.CARTEL);
-    const draggers = sortable.findAll('[draggable=true]');
-    await draggers[1].trigger('dragstart');
-    await sortable.vm.$nextTick();
-    const droppers = sortable.findAll('.drop-target');
-    await droppers[0].trigger('dragover');
-    await draggers[1].trigger('dragend');
+    await dragCard(sortable, 0, 1, 'after');
     cards = sortable.findAllComponents({
       name: 'Card',
     });
@@ -78,12 +87,7 @@ describe('SortableCards', () => {
     expect(cards[0].props().card.name).to.eq(CardName.CARTEL);
     expect(cards[1].props().card.name).to.eq(CardName.ANTS);
     expect(cards[2].props().card.name).to.eq(CardName.BIRDS);
-    const draggers = sortable.findAll('[draggable=true]');
-    await draggers[0].trigger('dragstart');
-    await sortable.vm.$nextTick();
-    const droppers = sortable.findAll('.drop-target');
-    await droppers[2].trigger('dragover');
-    await draggers[0].trigger('dragend');
+    await dragCard(sortable, 0, 2, 'before');
     cards = sortable.findAllComponents({
       name: 'Card',
     });
@@ -93,9 +97,9 @@ describe('SortableCards', () => {
     const order = localStorage.getItem('cardOrderfoo');
     expect(order).not.to.be.undefined;
     expect(JSON.parse(order!)).to.deep.eq({
-      [CardName.ANTS]: 2,
-      [CardName.CARTEL]: 3,
-      [CardName.BIRDS]: 4,
+      [CardName.ANTS]: 1,
+      [CardName.CARTEL]: 2,
+      [CardName.BIRDS]: 3,
     });
   });
 });

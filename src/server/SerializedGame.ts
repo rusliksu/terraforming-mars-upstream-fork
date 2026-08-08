@@ -62,6 +62,7 @@ export type SerializedGame = {
     seed: number;
     someoneHasRemovedOtherPlayersPlants: boolean;
     spectatorId: SpectatorId;
+    surrenderedPlayerIds?: Array<PlayerId>;
     stJosephCathedrals: Array<SpaceId>;
     syndicatePirateRaider: PlayerId | undefined;
     tags: ReadonlyArray<Tag>

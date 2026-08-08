@@ -57,6 +57,7 @@ export interface IGame extends Logger {
   generation: number;
   readonly players: ReadonlyArray<IPlayer>;
   readonly playersInGenerationOrder: ReadonlyArray<IPlayer>;
+  readonly surrenderedPlayerIds: Set<PlayerId>;
 
   /**
    * Stores the state of each global parameter at the end of each generation.

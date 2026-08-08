@@ -34,6 +34,7 @@ import {TiredEarth} from '../src/server/cards/pathfinders/TiredEarth';
 import {Tag} from '../src/common/cards/Tag';
 import {restoreTestDatabase, setTestDatabase} from './testing/setup';
 import {InMemoryDatabase} from './testing/InMemoryDatabase';
+import {testGame} from './TestGame';
 
 describe('Game', () => {
   it('should initialize with right defaults', () => {
@@ -810,6 +811,69 @@ describe('Game', () => {
 
     expect(serializedKeys.concat(...unserializedFieldsInGame).sort())
       .deep.eq(gameKeys.concat(...serializedValuesNotInGame).sort());
+  });
+
+  it('persists surrender state across game restore', () => {
+    const alice = TestPlayer.BLUE.newPlayer();
+    const bob = TestPlayer.RED.newPlayer();
+    const game = Game.newInstance('game-surrender', [alice, bob], alice, 'spectatorid');
+    game.surrenderedPlayerIds.add(bob.id);
+
+    const restored = Game.deserialize(game.serialize());
+
+    expect(Array.from(restored.surrenderedPlayerIds)).deep.eq([bob.id]);
+  });
+
+  it('ends multiplayer when only one player has not surrendered', () => {
+    const alice = TestPlayer.BLUE.newPlayer();
+    const bob = TestPlayer.RED.newPlayer();
+    const carol = TestPlayer.YELLOW.newPlayer();
+    const game = Game.newInstance('game-surrender', [alice, bob, carol], alice, 'spectatorid');
+
+    game.surrenderedPlayerIds.add(alice.id);
+    expect(game.gameIsOver()).eq(false);
+
+    game.surrenderedPlayerIds.add(bob.id);
+    expect(game.gameIsOver()).eq(true);
+  });
+
+  it('skips surrendered players during research', () => {
+    const [game, alice, bob] = testGame(2, {skipInitialCardSelection: true});
+    game.generation = 2;
+    game.surrenderedPlayerIds.add(alice.id);
+
+    game.gotoResearchPhase();
+
+    expect(game.hasResearched(alice)).eq(true);
+    expect(alice.getWaitingFor()).is.undefined;
+    expect(bob.getWaitingFor()).is.not.undefined;
+  });
+
+  it('automatically passes surrendered players during the action phase', () => {
+    const [game, alice, bob] = testGame(2, {skipInitialCardSelection: true});
+    game.phase = Phase.ACTION;
+    alice.clearWaitingFor();
+    bob.clearWaitingFor();
+    game.surrenderedPlayerIds.add(alice.id);
+
+    (game as any).startActionsForPlayer(alice);
+
+    expect(game.hasPassedThisActionPhase(alice)).eq(true);
+    expect(game.activePlayer).eq(bob);
+    expect(bob.getWaitingFor()).is.not.undefined;
+  });
+
+  it('skips surrendered players during final greenery placement', () => {
+    const [game, alice, bob] = testGame(2, {skipInitialCardSelection: true});
+    alice.clearWaitingFor();
+    bob.clearWaitingFor();
+    alice.plants = alice.plantsNeededForGreenery;
+    game.surrenderedPlayerIds.add(alice.id);
+
+    game.takeNextFinalGreeneryAction();
+
+    expect((game as any).donePlayers.has(alice.id)).eq(true);
+    expect(alice.getWaitingFor()).is.undefined;
   });
 
   it('deserializing a game without moon data still loads', () => {

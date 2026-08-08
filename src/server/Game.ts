@@ -97,6 +97,7 @@ export class Game implements IGame, Logger {
   public readonly name: string;
   public readonly gameOptions: Readonly<GameOptions>;
   public readonly players: ReadonlyArray<IPlayer>;
+  public readonly surrenderedPlayerIds = new Set<PlayerId>();
   // The API makes this readonly.
   public playersInGenerationOrder: ReadonlyArray<IPlayer> = [];
 
@@ -508,6 +509,7 @@ export class Game implements IGame, Logger {
       seed: this.rng.seed,
       someoneHasRemovedOtherPlayersPlants: this.someoneHasRemovedOtherPlayersPlants,
       spectatorId: this.spectatorId,
+      surrenderedPlayerIds: Array.from(this.surrenderedPlayerIds),
       syndicatePirateRaider: this.syndicatePirateRaider,
       tags: this.tags,
       temperature: this.temperature,
@@ -749,7 +751,11 @@ export class Game implements IGame, Logger {
     this.researchedPlayers.clear();
     this.save();
     this.players.forEach((player) => {
-      player.runResearchPhase();
+      if (this.surrenderedPlayerIds.has(player.id)) {
+        this.researchedPlayers.add(player.id);
+      } else {
+        player.runResearchPhase();
+      }
     });
   }
 
@@ -764,7 +770,8 @@ export class Game implements IGame, Logger {
       // Solo games continue until the designated generation end even if Mars is already terraformed
       return this.generation === this.lastSoloGeneration();
     }
-    return this.marsIsTerraformed();
+    const playersStillInGame = this.players.filter((player) => !this.surrenderedPlayerIds.has(player.id));
+    return playersStillInGame.length <= 1 || this.marsIsTerraformed();
   }
 
   public isDoneWithFinalProduction(): boolean {
@@ -1151,6 +1158,10 @@ export class Game implements IGame, Logger {
       if (this.donePlayers.has(player.id)) {
         continue;
       }
+      if (this.surrenderedPlayerIds.has(player.id)) {
+        this.donePlayers.add(player.id);
+        continue;
+      }
 
       // You many not place greeneries in solo mode unless you have already won the game
       // (e.g. completed global parameters, reached TR63.)
@@ -1177,6 +1188,13 @@ export class Game implements IGame, Logger {
 
   private startActionsForPlayer(player: IPlayer) {
     this.activePlayer = player;
+    if (this.surrenderedPlayerIds.has(player.id)) {
+      if (!this.hasPassedThisActionPhase(player)) {
+        player.pass();
+      }
+      this.playerIsFinishedTakingActions();
+      return;
+    }
     player.actionsTakenThisGame++;
     player.actionsTakenThisRound = 0;
 
@@ -1774,6 +1792,9 @@ export class Game implements IGame, Logger {
       game.underworldData = d.underworldData;
     }
     game.passedPlayers = new Set<PlayerId>(d.passedPlayers);
+    for (const playerId of d.surrenderedPlayerIds ?? []) {
+      game.surrenderedPlayerIds.add(playerId);
+    }
     game.donePlayers = new Set<PlayerId>(d.donePlayers);
     game.researchedPlayers = new Set<PlayerId>(d.researchedPlayers);
 

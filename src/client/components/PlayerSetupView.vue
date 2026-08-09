@@ -51,6 +51,8 @@
     <DynamicTitle v-if="playerView.pickedCorporationCard.length === 0" title="Select initial cards:" :color="thisPlayer.color"/>
     <WaitingFor v-if="game.phase !== 'end'" :playerView="playerView" :waitingfor="playerView.waitingFor"/>
 
+    <LogPanel :viewModel="playerView" :color="thisPlayer.color" :step="game.step"/>
+
     <DynamicTitle title="Game details" :color="thisPlayer.color"/>
 
     <div class="player_home_block" v-if="playerView.players.length > 1">
@@ -106,6 +108,7 @@ import DynamicTitle from '@/client/components/common/DynamicTitle.vue';
 import Milestones from '@/client/components/Milestones.vue';
 import Awards from '@/client/components/Awards.vue';
 import WaitingFor from '@/client/components/WaitingFor.vue';
+import LogPanel from '@/client/components/logpanel/LogPanel.vue';
 import Turmoil from '@/client/components/turmoil/Turmoil.vue';
 import MoonBoard from '@/client/components/moon/MoonBoard.vue';
 import PlanetaryTracks from '@/client/components/pathfinders/PlanetaryTracks.vue';
@@ -144,6 +147,7 @@ export default defineComponent({
     DeltaProjectBoard,
     DynamicTitle,
     WaitingFor,
+    LogPanel,
     Milestones,
     Awards,
     Turmoil,

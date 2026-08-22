@@ -8,6 +8,7 @@ import {LogHelper} from '../src/server/LogHelper';
 import {TestPlayer} from './TestPlayer';
 import {LogMessageDataType} from '../src/common/logs/LogMessageDataType';
 import {toName} from '../src/common/utils/utils';
+import {MartianCulture} from '../src/server/cards/pathfinders/MartianCulture';
 
 describe('LogHelper', () => {
   const player1 = TestPlayer.BLUE.newPlayer();
@@ -71,5 +72,12 @@ describe('LogHelper', () => {
       timestamp: 0,
       playerId: 'p-blue-id',
     });
+  });
+
+  it('logs multiple data resources without a plural suffix', () => {
+    LogHelper.logAddResource(player1, new MartianCulture(), 2);
+
+    const msg = game.gameLog.pop()!;
+    expect(msg.data[2]).deep.eq({type: LogMessageDataType.STRING, value: 'Data'});
   });
 });

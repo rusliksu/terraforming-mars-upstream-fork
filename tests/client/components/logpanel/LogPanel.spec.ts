@@ -66,7 +66,29 @@ describe('LogPanel', () => {
     document.getElementById = originalGetElementById;
   });
 
-  it('mounts without errors', () => {
+  it('loads the latest 100 logs on first mount', async () => {
+    const wrapper = shallowMount(LogPanel, {
+      ...globalConfig,
+      global: {
+        ...globalConfig.global,
+        stubs: {LogGenerationList: false},
+      },
+      props: {
+        viewModel: fakeViewModel(),
+        color: 'blue',
+      },
+    });
+
+    await flushLogs(wrapper);
+
+    expect(wrapper.exists()).to.be.true;
+    expect(wrapper.find('[data-test="log-recent"]').text()).eq('Last 100');
+    expect((wrapper.vm as any).selectedGeneration).eq(-1);
+    expect(fetchCalls[0]).includes('limit=100');
+    expect(fetchCalls[0]).does.not.include('generation=');
+  });
+
+  it('loads a full generation when it is selected from recent logs', async () => {
     const wrapper = shallowMount(LogPanel, {
       ...globalConfig,
       props: {
@@ -74,7 +96,16 @@ describe('LogPanel', () => {
         color: 'blue',
       },
     });
-    expect(wrapper.exists()).to.be.true;
+    await flushLogs(wrapper);
+
+    (wrapper.vm as any).showLatestLogs();
+    await flushLogs(wrapper);
+    (wrapper.vm as any).selectGeneration(1);
+    await flushLogs(wrapper);
+
+    expect((wrapper.vm as any).selectedGeneration).eq(1);
+    expect(fetchCalls[fetchCalls.length - 1]).includes('generation=1');
+    expect(fetchCalls[fetchCalls.length - 1]).does.not.include('limit=');
   });
 
   it('emits spaceClicked when a log message emits spaceClicked', async () => {
@@ -161,7 +192,7 @@ describe('LogPanel', () => {
     expect((wrapper.vm as any).showScrollToBottomButton).is.false;
   });
 
-  it('returns to the current generation and the end of the log', async () => {
+  it('returns to recent logs and the end of the log', async () => {
     const panel = installScrollablePanel();
     const baseViewModel = fakeViewModel({id: 'p-latest-reader' as any});
     const viewModel = {...baseViewModel, game: {...baseViewModel.game, generation: 3}};
@@ -176,8 +207,9 @@ describe('LogPanel', () => {
     await wrapper.find('[data-test="log-latest"]').trigger('click');
     await flushLogs(wrapper);
 
-    expect((wrapper.vm as any).selectedGeneration).eq(3);
-    expect(fetchCalls[fetchCalls.length - 1]).includes('generation=3');
+    expect((wrapper.vm as any).selectedGeneration).eq(-1);
+    expect(fetchCalls[fetchCalls.length - 1]).includes('limit=100');
+    expect(fetchCalls[fetchCalls.length - 1]).does.not.include('generation=');
     expect(panel.getScrollTop()).eq(520);
   });
 
@@ -193,8 +225,8 @@ describe('LogPanel', () => {
     });
     await flushLogs(first);
     // Module-level view state can be left behind by earlier tests, so explicitly
-    // establish "following" mode rather than relying on the freshly-mounted default.
-    (first.vm as any).showLatestLogs();
+    // establish full-current-generation mode rather than relying on the default.
+    (first.vm as any).selectGeneration(2);
     await flushLogs(first);
     first.unmount();
 

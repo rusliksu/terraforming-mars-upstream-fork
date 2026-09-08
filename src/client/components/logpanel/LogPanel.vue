@@ -10,6 +10,11 @@
           <span v-i18n>Game log</span>
         </h2>
       </template>
+      <template #after-generations>
+        <div class="log-gen-indicator" :class="recentLogsClass" data-test="log-recent" @click.prevent="showLatestLogs">
+          <span v-i18n>Last 100</span>
+        </div>
+      </template>
     </LogGenerationList>
     <div class="panel log-panel">
       <div id="logpanel-scrollable" class="panel-body" @scroll="updateScrollState">
@@ -46,9 +51,10 @@ import {getPreferences} from '@/client/utils/PreferencesManager';
 import LogMessageComponent from '@/client/components/logpanel/LogMessageComponent.vue';
 import LogMessageInspector from '@/client/components/logpanel/LogMessageInspector.vue';
 import LogGenerationList from '@/client/components/logpanel/LogGenerationList.vue';
-import {fetchLogs} from '@/client/utils/fetchLogs';
+import {fetchLogs, type FetchLogsOptions} from '@/client/utils/fetchLogs';
 
 const BOTTOM_SCROLL_THRESHOLD = 24; // Roughly one line of log text.
+const RECENT_LOG_LIMIT = 100;
 
 type ScrollPosition = number | 'bottom';
 
@@ -59,6 +65,8 @@ type ViewState = {
   // True if the player was viewing the newest generation, and so should be moved
   // forward to whatever generation is newest after a remount.
   following: boolean,
+  // True when the panel shows the bounded latest-log view rather than a full generation.
+  recent: boolean,
   // Either 'bottom' which means continue scrolling as new entries appear,
   // or a number which is the pixel height from the top of the widget.
   scrollPosition: ScrollPosition,
@@ -73,6 +81,7 @@ type Refs = {
 type LogPanelModel = {
   messages: Array<LogMessage>,
   selectedGeneration: number,
+  recent: boolean,
   showScrollToBottomButton: boolean,
   // True while the panel should keep following the newest generation as it changes.
   // False once the player manually navigates to an earlier generation.
@@ -100,6 +109,7 @@ export default defineComponent({
     return {
       messages: [],
       selectedGeneration: -1,
+      recent: true,
       showScrollToBottomButton: false,
       following: true,
     };
@@ -116,19 +126,27 @@ export default defineComponent({
     },
     selectGeneration(gen: number): void {
       this.following = gen === this.generation;
-      if (gen !== this.selectedGeneration) {
+      if (gen !== this.selectedGeneration || this.recent) {
+        this.recent = false;
         this.getLogsForGeneration(gen, gen === this.generation ? 'bottom' : undefined);
       }
       this.selectedGeneration = gen;
     },
     showLatestLogs(): void {
       this.following = true;
-      this.selectedGeneration = this.generation;
-      this.getLogsForGeneration(this.generation, 'bottom');
+      this.recent = true;
+      this.selectedGeneration = -1;
+      this.getRecentLogs('bottom');
     },
     getLogsForGeneration(generation: number, scrollPosition?: ScrollPosition): void {
+      this.loadLogs({generation}, scrollPosition);
+    },
+    getRecentLogs(scrollPosition?: ScrollPosition): void {
+      this.loadLogs({limit: RECENT_LOG_LIMIT}, scrollPosition);
+    },
+    loadLogs(options: FetchLogsOptions, scrollPosition?: ScrollPosition): void {
       const messages = this.messages;
-      fetchLogs(this.viewModel.id, generation)
+      fetchLogs(this.viewModel.id, options)
         .then((data) => {
           if (!data) {
             return;
@@ -186,20 +204,30 @@ export default defineComponent({
       classes.push(playerColorClass(this.color, 'shadow'));
       return classes.join(' ');
     },
+    recentLogsClass(): string {
+      return this.recent ? 'log-gen-indicator--selected' : '';
+    },
     scrollablePanel(): HTMLElement | null {
       return document.getElementById('logpanel-scrollable');
     },
   },
   mounted() {
     const restoredState = viewState;
-    if (restoredState !== undefined && restoredState.following === false) {
+    if (restoredState === undefined || restoredState.recent) {
+      this.following = true;
+      this.recent = true;
+      this.selectedGeneration = -1;
+      this.getRecentLogs(restoredState?.scrollPosition ?? 'bottom');
+    } else if (restoredState.following === false) {
       this.following = false;
+      this.recent = false;
       this.selectedGeneration = restoredState.selectedGeneration;
       this.getLogsForGeneration(this.selectedGeneration, restoredState.scrollPosition);
     } else {
-      // Either this is the first mount, or the panel was following the newest
-      // generation, which may have advanced since the previous instance unmounted.
+      // The panel was following the full current generation, which may have advanced
+      // since the previous instance unmounted.
       this.following = true;
+      this.recent = false;
       this.selectedGeneration = this.generation;
       this.getLogsForGeneration(this.selectedGeneration, 'bottom');
     }
@@ -208,6 +236,7 @@ export default defineComponent({
     viewState = {
       selectedGeneration: this.selectedGeneration,
       following: this.following,
+      recent: this.recent,
       scrollPosition: this.isNearBottom() ? 'bottom' : this.scrollablePanel?.scrollTop ?? 'bottom',
     };
   },

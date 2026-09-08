@@ -4,13 +4,25 @@ import {ParticipantId} from '@/common/Types';
 
 let abortController: AbortController | undefined;
 
-export async function fetchLogs(id: ParticipantId, generation: number): Promise<Array<LogMessage> | undefined> {
+export type FetchLogsOptions = {
+  generation?: number;
+  limit?: number;
+};
+
+export async function fetchLogs(id: ParticipantId, options: FetchLogsOptions): Promise<Array<LogMessage> | undefined> {
   // Aborts any pending request for a previous generation before starting the new one.
   // If the past call is complete, .abort() does nothing.
   abortController?.abort();
   abortController = new AbortController();
 
-  const url = `${paths.API_GAME_LOGS}?id=${id}&generation=${generation}`;
+  const params = new URLSearchParams({id});
+  if (options.generation !== undefined) {
+    params.set('generation', options.generation.toString());
+  }
+  if (options.limit !== undefined) {
+    params.set('limit', options.limit.toString());
+  }
+  const url = `${paths.API_GAME_LOGS}?${params.toString()}`;
 
   try {
     const resp = await fetch(url, {signal: abortController.signal});

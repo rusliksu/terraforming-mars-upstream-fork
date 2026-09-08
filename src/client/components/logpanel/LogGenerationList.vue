@@ -6,6 +6,7 @@
       <div v-for="n in range" :key="n" class="log-gen-indicator" :class="selectedClass(n)" @click.prevent="$emit('selected', n)">
         {{ n }}
       </div>
+      <slot name="after-generations"></slot>
     </div>
     <span class="label-additional" v-if="lastSoloGeneration !== undefined">
       <span :class="lastGenerationClass" v-i18n>of {{lastSoloGeneration}}</span>

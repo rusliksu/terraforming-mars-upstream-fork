@@ -62,4 +62,39 @@ describe('WaitingFor', () => {
     });
     expect(wrapper.text()).to.include('Not your turn');
   });
+
+  it('applies an action response through the root player-view contract without cycling screens', () => {
+    const wrapper = shallowMount(WaitingFor, {
+      ...globalConfig,
+      global: {
+        ...globalConfig.global,
+        stubs: {'PlayerInputFactory': true},
+      },
+      props: {
+        playerView: playerView as PlayerViewModel,
+        waitingfor: {
+          type: 'option',
+          title: 'test',
+          buttonLabel: 'save',
+        },
+      },
+    });
+    const nextPlayerView = {...playerView, runId: 'next-run'} as PlayerViewModel;
+    const root = wrapper.vm.$root as any;
+    let applied: PlayerViewModel | undefined;
+    root.screen = 'player-home';
+    root.viewRevision = 4;
+    root.applyPlayerView = (model: PlayerViewModel) => {
+      applied = model;
+      root.playerView = model;
+      root.viewRevision++;
+    };
+
+    wrapper.vm.updatePlayerView(nextPlayerView);
+
+    expect(applied).eq(nextPlayerView);
+    expect(root.screen).eq('player-home');
+    expect(root.viewRevision).eq(5);
+    wrapper.unmount();
+  });
 });

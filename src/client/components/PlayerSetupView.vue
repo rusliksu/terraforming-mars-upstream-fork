@@ -49,7 +49,7 @@
     </template>
 
     <DynamicTitle v-if="playerView.pickedCorporationCard.length === 0" title="Select initial cards:" :color="thisPlayer.color"/>
-    <WaitingFor v-if="game.phase !== 'end'" :playerView="playerView" :waitingfor="playerView.waitingFor"/>
+    <WaitingFor v-if="game.phase !== 'end'" :playerView="playerView" :waitingfor="playerView.waitingFor" :key="'waiting-' + viewRevision"/>
 
     <DynamicTitle title="Game details" :color="thisPlayer.color"/>
 
@@ -126,6 +126,10 @@ export default defineComponent({
     },
     tileView: {
       type: String as () => TileView,
+      required: true,
+    },
+    viewRevision: {
+      type: Number,
       required: true,
     },
   },

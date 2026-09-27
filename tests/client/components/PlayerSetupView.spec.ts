@@ -11,6 +11,7 @@ describe('PlayerSetupView', () => {
       props: {
         playerView: fakePlayerViewModel(),
         tileView: 'show',
+        viewRevision: 0,
       },
     });
     expect(wrapper.exists()).to.be.true;

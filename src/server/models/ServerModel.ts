@@ -29,11 +29,13 @@ import {cardsToModel, coloniesToModel} from './ModelUtils';
 import {runId} from '../utils/server-ids';
 import {toName} from '../../common/utils/utils';
 import {MAX_AWARDS, MAX_MILESTONES} from '../../common/constants';
+import {AstraMechanica} from '../cards/promo/AstraMechanica';
 
 export class Server {
   public static getSimpleGameModel(game: IGame): SimpleGameModel {
     return {
       activePlayer: game.activePlayer.color,
+      astraMechanicaReplayTargetExclusions: AstraMechanica.UNUSABLE_CARDS,
       id: game.id,
       name: game.name,
       phase: game.phase,
@@ -69,6 +71,7 @@ export class Server {
 
     return {
       aresData: game.aresData,
+      astraMechanicaReplayTargetExclusions: AstraMechanica.UNUSABLE_CARDS,
       awards: this.getAwards(game),
       colonies: coloniesToModel(game, game.colonies, false, true),
       deckSize: game.projectDeck.drawPile.length,

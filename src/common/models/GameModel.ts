@@ -13,6 +13,7 @@ import {SpectatorId} from '../Types';
 import {ColonyName} from '../colonies/ColonyName';
 import {GlobalParameter} from '../GlobalParameter';
 import {Tag} from '../cards/Tag';
+import {CardName} from '../cards/CardName';
 
 export type DeckSizeModel = {
   drawPile: number;
@@ -29,6 +30,7 @@ export type OtherDeckSizesModel = {
 
 // Common data about a game not assocaited with a player (eg the temperature.)
 export type GameModel = {
+  astraMechanicaReplayTargetExclusions?: ReadonlyArray<CardName>;
   aresData: AresData | undefined;
   awards: ReadonlyArray<FundedAwardModel>;
   colonies: ReadonlyArray<ColonyModel>;

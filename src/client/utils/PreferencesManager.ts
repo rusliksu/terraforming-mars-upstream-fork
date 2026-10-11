@@ -23,6 +23,7 @@ export type Preferences = {
   symbol_overlay: boolean,
   animated_title: boolean,
   experimental_ui: boolean,
+  experimental_layout: boolean,
   lang: string,
 }
 
@@ -53,6 +54,7 @@ const defaults: Preferences = {
   animated_title: true,
 
   experimental_ui: false,
+  experimental_layout: false,
   debug_view: false,
 };
 

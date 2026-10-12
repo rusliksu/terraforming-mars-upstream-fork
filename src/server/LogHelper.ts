@@ -10,7 +10,7 @@ import {SpaceType} from '@/common/boards/SpaceType';
 
 function resourceString(resource: CardResource | undefined, qty: number): string {
   const result = resource ?? 'resource';
-  if (qty === 1) {
+  if (qty === 1 || resource === CardResource.DATA) {
     return result;
   } else {
     return result + '(s)';

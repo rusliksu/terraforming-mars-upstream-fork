@@ -43,6 +43,7 @@ describe('ApiGame', () => {
     expect(json).deep.eq(
       {
         'activePlayer': 'black',
+        'astraMechanicaReplayTargetExclusions': ['Patent Manipulation', 'Hostile Takeover'],
         'expectedPurgeTimeMs': -1,
         'id': 'game-valid-id',
         'lastSoloGeneration': 14,

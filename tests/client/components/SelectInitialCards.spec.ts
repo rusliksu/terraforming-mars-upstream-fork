@@ -5,12 +5,13 @@ import {CardName} from '@/common/cards/CardName';
 import SelectInitialCards from '@/client/components/SelectInitialCards.vue';
 import {SelectInitialCardsResponse, InputResponse} from '@/common/inputs/InputResponse';
 import ConfirmDialog from '@/client/components/common/ConfirmDialog.vue';
-import {Preferences} from '@/client/utils/PreferencesManager';
+import {Preferences, PreferencesManager} from '@/client/utils/PreferencesManager';
 import * as titles from '@/common/inputs/SelectInitialCards';
 import {SelectCardModel} from '@/common/models/PlayerInputModel';
 import {CardModel} from '@/common/models/CardModel';
 import {PlayerViewModel} from '@/common/models/PlayerModel';
 import {asComplete} from './utils/models';
+import russianUi from '@/locales/ru/ui.json';
 
 let savedData: InputResponse | undefined;
 
@@ -59,6 +60,35 @@ describe('SelectInitialCards', () => {
     expect(button.attributes().disabled).not.to.be.undefined;
   });
 
+  it('shows the required one-prelude heading', () => {
+    const component = createComponent(
+      [CardName.ECOLINE], [CardName.ANTS], [CardName.ALLIED_BANK, CardName.SUPPLY_DROP], undefined, 1);
+    const selectCards = component.findAllComponents({name: 'select-card'});
+
+    expect(selectCards[1].find('.wf-component-title').text()).eq('Select 1 Prelude card');
+    expect(component.props().playerinput.options[1]).include({title: 'Select 2 Prelude cards', min: 1, max: 1});
+  });
+
+  it('shows the one-prelude heading in Russian with experimental UI', () => {
+    const originalPreferences = {...PreferencesManager.INSTANCE.values()};
+    const translations = (window as any)._translations;
+    PreferencesManager.INSTANCE.set('lang', 'ru');
+    PreferencesManager.INSTANCE.set('experimental_ui', true);
+    (window as any)._translations = russianUi;
+    try {
+      const component = createComponent(
+        [CardName.ECOLINE], [CardName.ANTS], [CardName.ALLIED_BANK, CardName.SUPPLY_DROP], undefined, 1);
+      const selectCards = component.findAllComponents({name: 'select-card'});
+      expect(selectCards[1].find('.wf-component-title').text()).eq('Выберите 1 карту пролога');
+      expect(selectCards[1].props().playerinput.max).eq(2);
+      expect(component.props().playerinput.options[1]).include({title: 'Select 2 Prelude cards', min: 1, max: 1});
+    } finally {
+      PreferencesManager.INSTANCE.set('lang', originalPreferences.lang);
+      PreferencesManager.INSTANCE.set('experimental_ui', originalPreferences.experimental_ui);
+      (window as any)._translations = translations;
+    }
+  });
+
   it('saves data with prelude', async () => {
     const component = createComponent(
       [CardName.ECOLINE],
@@ -72,6 +102,7 @@ describe('SelectInitialCards', () => {
     const selectCards = component.findAllComponents({name: 'select-card'});
     expect(selectCards).has.length(3);
 
+    expect(selectCards[1].find('.wf-component-title').text()).eq('Select 2 Prelude cards');
     selectCards[0].vm.$emit('cardschanged', [CardName.ECOLINE]);
     await component.vm.$nextTick();
     expect(button.attributes().disabled).not.to.be.undefined;
@@ -156,7 +187,7 @@ function getConfirmDialog(component: VueWrapper<InstanceType<typeof SelectInitia
   return component.vm.$refs.confirmation as InstanceType<typeof ConfirmDialog>;
 }
 
-function createComponent(corpCards: Array<CardName>, projectCards: Array<CardName>, preludeCards?: Array<CardName>, ceoCards?: Array<CardName>) {
+function createComponent(corpCards: Array<CardName>, projectCards: Array<CardName>, preludeCards?: Array<CardName>, ceoCards?: Array<CardName>, preludeCount = 2) {
   const toObject = (cards: Array<CardName>) => cards.map((name) => {
     return {name} as CardModel;
   });
@@ -190,8 +221,8 @@ function createComponent(corpCards: Array<CardName>, projectCards: Array<CardNam
       title: titles.SELECT_PRELUDE_TITLE,
       buttonLabel: 'x',
       cards: toObject(preludeCards),
-      max: 2,
-      min: 2,
+      max: preludeCount,
+      min: preludeCount,
       showOnlyInLearnerMode: false,
       selectBlueCardAction: false,
       showOwner: false,
